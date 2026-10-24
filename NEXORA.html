@@ -1,0 +1,504 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXORA – Datei-Sicherung</title>
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #080d18;
+  --panel: #111a2b;
+  --border: #293852;
+  --blue: #3b82f6;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(ellipse at top, #17264a, var(--bg) 55%);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  padding: 22px 6%;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo {
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #60a5fa;
+}
+main { width: min(850px, 92%); margin: 38px auto; }
+.hero { text-align: center; margin-bottom: 30px; }
+h1 { font-size: clamp(32px, 6vw, 48px); margin-bottom: 10px; }
+h1 span { color: #60a5fa; }
+p { line-height: 1.6; }
+.muted { color: var(--muted); }
+.card {
+  background: rgba(17, 26, 43, .96);
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: 18px;
+  margin-bottom: 20px;
+  animation: appear .4s ease;
+}
+@keyframes appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+h2 { font-size: 20px; margin-top: 0; }
+input, select {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0 15px;
+  background: #080d18;
+  color: white;
+  border: 1px solid #334155;
+  border-radius: 9px;
+  font-size: 15px;
+}
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 13px 16px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: .2s;
+}
+button:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.primary { background: var(--blue); color: white; width: 100%; }
+.secondary { background: #26354d; color: white; }
+.danger { background: #7f1d1d; color: white; }
+.dropzone {
+  display: block;
+  border: 2px dashed #3b82f6;
+  border-radius: 13px;
+  padding: 27px 15px;
+  text-align: center;
+  cursor: pointer;
+  margin: 15px 0;
+}
+.dropzone:hover { background: #172743; }
+.big-icon { font-size: 38px; }
+.code-display {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 7px;
+  color: #6ee7b7;
+  overflow-wrap: anywhere;
+  margin: 15px 0;
+}
+.strength-track {
+  height: 7px;
+  background: #26354d;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+#strengthBar {
+  height: 100%;
+  width: 0;
+  background: #ef4444;
+  transition: .2s;
+}
+#strengthLabel { font-weight: bold; font-size: 13px; }
+.warning {
+  background: #422006;
+  color: #fde68a;
+  border: 1px solid #92400e;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.success {
+  background: #052e25;
+  border: 1px solid #059669;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 16px;
+  overflow-wrap: anywhere;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.file-name { overflow-wrap: anywhere; }
+.small { font-size: 12px; color: var(--muted); }
+.hidden { display: none !important; }
+footer { text-align: center; color: var(--muted); padding: 25px; font-size: 12px; }
+</style>
+</head>
+
+<body>
+<header>
+  <div class="logo">NEXORA</div>
+  <span class="muted">DATEI-SICHERUNG</span>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Deine Dateien.<br><span>Deine Kontrolle.</span></h1>
+    <p class="muted">Sichern, wiederfinden und herunterladen.</p>
+  </section>
+
+  <div class="warning">
+    ⚠️ <strong>Wichtiger Hinweis:</strong> Diese Version speichert Dateien
+    nur in diesem Browser auf diesem Gerät. Sie ist kein Online-Cloud-Speicher.
+    Lösche deine Originaldateien erst, wenn du eine echte externe Sicherung
+    erstellt und getestet hast.
+  </div>
+
+  <section class="card">
+    <h2>📁 1. Dateien sichern</h2>
+    <label class="dropzone" for="fileInput">
+      <div class="big-icon">⬆️</div>
+      <strong>Dateien auswählen</strong>
+      <p class="muted">Wähle eine oder mehrere Dateien aus.</p>
+    </label>
+    <input type="file" id="fileInput" multiple>
+    <div id="selectedList" class="muted"></div>
+
+    <h2 style="margin-top:25px">🔑 2. Deinen 8-Zeichen-Code</h2>
+    <label for="codeMode">Code-Art</label>
+    <select id="codeMode">
+      <option value="auto">Sicheren Code automatisch erstellen</option>
+      <option value="custom">Eigenen Code festlegen</option>
+    </select>
+
+    <div id="customArea" class="hidden">
+      <label for="customCode">Dein Code (genau 8 Zeichen)</label>
+      <input id="customCode" maxlength="8" minlength="8"
+        autocomplete="off" spellcheck="false"
+        placeholder="z. B. N7p!4Kq2">
+
+      <div class="strength-track"><div id="strengthBar"></div></div>
+      <div id="strengthLabel">Code-Stärke: Noch kein Code</div>
+      <p class="small">
+        Nutze Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen.
+        Ein kurzer Code kann trotz guter Mischung erraten werden.
+      </p>
+    </div>
+
+    <button class="primary" id="saveButton">Dateien sichern</button>
+
+    <div id="saveResult" class="success hidden">
+      <strong>Dein Sicherungscode</strong>
+      <div id="createdCode" class="code-display"></div>
+      <button class="secondary" id="copyCode">Code kopieren</button>
+      <p class="small">
+        Bewahre diesen Code sicher auf. Ohne ihn kannst du die Sicherung
+        möglicherweise nicht wiederfinden.
+      </p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>📥 3. Sicherung wiederherstellen</h2>
+    <p class="muted">
+      Gib den Code ein, um die dazu gespeicherten Dateien zu finden.
+    </p>
+    <input id="restoreCode" maxlength="8" autocomplete="off"
+      placeholder="8-Zeichen-Code">
+    <button class="primary" id="restoreButton">Sicherung öffnen</button>
+    <div id="restoreList" style="margin-top:15px"></div>
+  </section>
+
+  <section class="card">
+    <h2>☁️ Speicherplatz</h2>
+    <div style="font-size:32px;font-weight:bold">
+      1 TB <span class="muted" style="font-size:14px">Ziel</span>
+    </div>
+    <p class="muted">
+      1 TB echter Online-Speicher ist noch nicht verbunden. Dafür wird ein
+      Server oder Cloud-Speicherdienst benötigt.
+    </p>
+  </section>
+</main>
+
+<footer>NEXORA · Lokale Demo · Bewahre wichtige Dateien zusätzlich extern auf.</footer>
+
+<script>
+const DB_NAME = "NEXORA_FILES_V1";
+const STORE_NAME = "backups";
+let selectedFiles = [];
+
+const $ = id => document.getElementById(id);
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "code" });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function dbGet(code) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(code);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+
+async function dbPut(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).add(record);
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onerror = () => {
+      const error = tx.error;
+      db.close();
+      reject(error);
+    };
+    tx.onabort = () => {
+      const error = tx.error;
+      db.close();
+      reject(error || new Error("Speichern abgebrochen"));
+    };
+  });
+}
+
+function randomCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$";
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+}
+
+function strength(code) {
+  let score = 0;
+  if (/[a-z]/.test(code)) score++;
+  if (/[A-Z]/.test(code)) score++;
+  if (/[0-9]/.test(code)) score++;
+  if (/[^a-zA-Z0-9]/.test(code)) score++;
+  if (new Set(code).size >= 6) score++;
+  if (/(.)\1{2,}/.test(code)) score = Math.max(0, score - 2);
+  if (/1234|abcd|qwer|password/i.test(code)) score = 0;
+  return score;
+}
+
+function updateStrength() {
+  const code = $("customCode").value;
+  const score = strength(code);
+  const bar = $("strengthBar");
+  const label = $("strengthLabel");
+
+  if (!code.length) {
+    bar.style.width = "0";
+    label.textContent = "Code-Stärke: Noch kein Code";
+    label.style.color = "#94a3b8";
+    return;
+  }
+
+  if (code.length !== 8) {
+    bar.style.width = Math.min(100, code.length / 8 * 100) + "%";
+    bar.style.background = "#ef4444";
+    label.textContent = `Code-Stärke: ${code.length}/8 Zeichen`;
+    label.style.color = "#f87171";
+    return;
+  }
+
+  const levels = [
+    ["Schwach", "#ef4444", "25%"],
+    ["Schwach", "#ef4444", "25%"],
+    ["Mittel", "#f59e0b", "50%"],
+    ["Mittel", "#f59e0b", "50%"],
+    ["Gut", "#22c55e", "75%"],
+    ["Stark", "#10b981", "100%"]
+  ];
+
+  const item = levels[Math.min(score, 5)];
+  label.textContent = "Code-Stärke: " + item[0];
+  label.style.color = item[1];
+  bar.style.background = item[1];
+  bar.style.width = item[2];
+}
+
+$("fileInput").addEventListener("change", () => {
+  selectedFiles = Array.from($("fileInput").files);
+  $("selectedList").textContent = selectedFiles.length
+    ? selectedFiles.map(f => `${f.name} (${formatSize(f.size)}`).join(" · ")
+    : "Keine Dateien ausgewählt.";
+});
+
+$("codeMode").addEventListener("change", () => {
+  $("customArea").classList.toggle("hidden", $("codeMode").value !== "custom");
+});
+
+$("customCode").addEventListener("input", updateStrength);
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 ** 2) return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 ** 3) return (bytes / 1024 ** 2).toFixed(1) + " MB";
+  return (bytes / 1024 ** 3).toFixed(2) + " GB";
+}
+
+$("saveButton").addEventListener("click", async () => {
+  if (!selectedFiles.length) {
+    alert("Wähle zuerst mindestens eine Datei aus.");
+    return;
+  }
+
+  let code = $("codeMode").value === "auto"
+    ? randomCode()
+    : $("customCode").value;
+
+  if (code.length !== 8) {
+    alert("Der Code muss genau 8 Zeichen lang sein.");
+    return;
+  }
+
+  if ($("codeMode").value === "custom" && strength(code) < 4) {
+    if (!confirm("Dieser Code ist möglicherweise schwach. Trotzdem verwenden?")) {
+      return;
+    }
+  }
+
+  $("saveButton").disabled = true;
+  $("saveButton").textContent = "Speichere Dateien …";
+
+  try {
+    if (await dbGet(code)) {
+      alert("Dieser Code existiert bereits. Bitte verwende einen anderen.");
+      return;
+    }
+
+    const files = await Promise.all(selectedFiles.map(async file => ({
+      name: file.name,
+      type: file.type || "application/octet-stream",
+      size: file.size,
+      blob: file
+    })));
+
+    await dbPut({
+      code,
+      createdAt: new Date().toISOString(),
+      files
+    });
+
+    $("createdCode").textContent = code;
+    $("saveResult").classList.remove("hidden");
+    $("restoreCode").value = code;
+    alert("Die Dateiinhalte wurden im lokalen Browser gespeichert. Das ist keine Online-Sicherung.");
+  } catch (error) {
+    console.error(error);
+    alert("Speichern fehlgeschlagen. Der Browserspeicher könnte voll sein oder nicht verfügbar.");
+  } finally {
+    $("saveButton").disabled = false;
+    $("saveButton").textContent = "Dateien sichern";
+  }
+});
+
+$("copyCode").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText($("createdCode").textContent);
+    alert("Code kopiert!");
+  } catch {
+    alert("Bitte markiere den Code und kopiere ihn manuell.");
+  }
+});
+
+$("restoreButton").addEventListener("click", async () => {
+  const code = $("restoreCode").value.trim();
+  const output = $("restoreList");
+  output.replaceChildren();
+
+  if (code.length !== 8) {
+    output.textContent = "Der Code muss genau 8 Zeichen lang sein.";
+    return;
+  }
+
+  try {
+    const backup = await dbGet(code);
+    if (!backup) {
+      output.textContent = "Keine lokale Sicherung mit diesem Code gefunden.";
+      return;
+    }
+
+    const heading = document.createElement("p");
+    heading.textContent =
+      `Sicherung vom ${new Date(backup.createdAt).toLocaleString("de-DE")}`;
+    output.append(heading);
+
+    backup.files.forEach(file => {
+      const row = document.createElement("div");
+      row.className = "file-row";
+
+      const details = document.createElement("div");
+      details.className = "file-name";
+      details.textContent = `📄 ${file.name} · ${formatSize(file.size)}`;
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "6px";
+
+      const download = document.createElement("button");
+      download.className = "secondary";
+      download.textContent = "Herunterladen";
+      download.addEventListener("click", () => {
+        const url = URL.createObjectURL(file.blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      });
+
+      const open = document.createElement("button");
+      open.className = "secondary";
+      open.textContent = "Öffnen";
+      open.addEventListener("click", () => {
+        const url = URL.createObjectURL(file.blob);
+        window.open(url, "_blank", "noopener");
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      });
+
+      actions.append(open, download);
+      row.append(details, actions);
+      output.append(row);
+    });
+
+    const note = document.createElement("p");
+    note.className = "small";
+    note.textContent =
+      "Die Dateien werden aus dem lokalen Browserspeicher wiederhergestellt. " +
+      "Auf einem anderen Gerät sind sie nicht verfügbar.";
+    output.append(note);
+  } catch (error) {
+    console.error(error);
+    output.textContent = "Die Sicherung konnte nicht geöffnet werden.";
+  }
+});
+</script>
+</body>
+</html>
